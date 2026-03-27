@@ -5,6 +5,7 @@ from .serializers import AuthorSerializer, BookSerializer, MemberSerializer, Loa
 from rest_framework.decorators import action
 from django.utils import timezone
 from .tasks import send_loan_notification
+from datetime import timedelta
 
 class AuthorViewSet(viewsets.ModelViewSet):
     queryset = Author.objects.all()
@@ -24,7 +25,12 @@ class BookViewSet(viewsets.ModelViewSet):
             member = Member.objects.get(id=member_id)
         except Member.DoesNotExist:
             return Response({'error': 'Member does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-        loan = Loan.objects.create(book=book, member=member)
+        
+        current_date = timezone.now().date()
+        return_date = current_date + timedelta(days=14)
+        
+        loan = Loan.objects.create(book=book, member=member, return_date=return_date)
+        
         book.available_copies -= 1
         book.save()
         send_loan_notification.delay(loan.id)
@@ -52,3 +58,13 @@ class MemberViewSet(viewsets.ModelViewSet):
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
+    
+    @action(detail=True, methods=['post'])
+    def loans(self, request, pk=None):
+        member_id = request.data.get('member_id')
+        if member_id is not None:    
+            loan = self. get_object()
+            loan.return_date = request.data('additional_days')
+            
+            loan.save()
+            return Response({'status': 'Loan return date setted new value'})
