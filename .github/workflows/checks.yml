@@ -19,6 +19,14 @@ jobs:
               with:
                   username: ${{ secrets.DOCKERHUB_USER }}
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
+                  
+            - name: Create dummy .env
+                run: |
+                  touch .env
+                  echo "SECRET_KEY=test_key_for_ci" >> .env
+                  echo "DEBUG=True" >> .env
+                  # Adicione aqui outras variáveis que seu Django EXIJE para iniciar
+                  # Ex: DATABASE_URL, ALLOWED_HOSTS, etc.
 
             - name: Build and Test
               run: |
