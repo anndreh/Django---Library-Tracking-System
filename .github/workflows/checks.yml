@@ -23,7 +23,7 @@ jobs:
             - name: Build and Test
               run: |
                   docker compose build
-                  docker compose run --rm web python manage.py test
+                  docker compose --env-file .env.example run web python manage.py test
 
             - name: Push to Docker Hub
               # Este passo só roda se o teste anterior passar
