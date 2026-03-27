@@ -21,7 +21,7 @@ jobs:
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
                   
             - name: Create dummy .env
-                run: |
+              run: |
                   touch .env
                   echo "SECRET_KEY=test_key_for_ci" >> .env
                   echo "DEBUG=True" >> .env
