@@ -22,7 +22,7 @@ jobs:
 
             - name: Build and Test
               run: |
-                  docker compose Build
+                  docker compose build
                   docker compose run --rm web python manage.py test
 
             - name: Push to Docker Hub
