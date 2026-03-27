@@ -21,7 +21,9 @@ jobs:
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
 
             - name: Build and Test
-              run: docker compose run web "python manage.py test"
+              run: |
+                  docker compose Build
+                  docker compose run --rm web python manage.py test
 
             - name: Push to Docker Hub
               # Este passo só roda se o teste anterior passar
