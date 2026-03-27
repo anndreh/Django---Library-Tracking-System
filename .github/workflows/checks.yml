@@ -24,9 +24,7 @@ jobs:
               run: |
                   touch .env
                   echo "SECRET_KEY=test_key_for_ci" >> .env
-                  echo "DEBUG=True" >> .env
-                  # Adicione aqui outras variáveis que seu Django EXIJE para iniciar
-                  # Ex: DATABASE_URL, ALLOWED_HOSTS, etc.
+                  echo "DEBUG=1" >> .env
 
             - name: Build and Test
               run: |
@@ -34,5 +32,4 @@ jobs:
                   docker compose --env-file .env.example run web python manage.py test
 
             - name: Push to Docker Hub
-              # Este passo só roda se o teste anterior passar
               run: docker compose push web
