@@ -1,19 +1,20 @@
----
-name: Checks
-
-on: [push]
-
 jobs:
     test-lint:
-        name: Test
+        name: Test and Push
         runs-on: ubuntu-24.04
         steps:
+            - name: Checkout
+              uses: actions/checkout@v2
+
             - name: Login to Docker Hub
               uses: docker/login-action@v1
               with:
                   username: ${{ secrets.DOCKERHUB_USER }}
                   password: ${{ secrets.DOCKERHUB_TOKEN }}
-            - name: Checkout
-              uses: actions/checkout@v2
-            - name: Test
+
+            - name: Build and Test
               run: docker compose run web "python manage.py test"
+
+            - name: Push to Docker Hub
+              # Este passo só roda se o teste anterior passar
+              run: docker compose push web
