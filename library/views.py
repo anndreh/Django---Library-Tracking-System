@@ -5,6 +5,8 @@ from .serializers import AuthorSerializer, BookSerializer, MemberSerializer, Loa
 from rest_framework.decorators import action
 from django.utils import timezone
 from .tasks import send_loan_notification
+from datetime import timedelta
+
 
 class AuthorViewSet(viewsets.ModelViewSet):
     queryset = Author.objects.all()
@@ -17,18 +19,30 @@ class BookViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'])
     def loan(self, request, pk=None):
         book = self.get_object()
-        if book.available_copies < 1:
-            return Response({'error': 'No available copies.'}, status=status.HTTP_400_BAD_REQUEST)
         member_id = request.data.get('member_id')
+        
         try:
             member = Member.objects.get(id=member_id)
         except Member.DoesNotExist:
             return Response({'error': 'Member does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
-        loan = Loan.objects.create(book=book, member=member)
-        book.available_copies -= 1
-        book.save()
+        
+        current_date = timezone.now().date()
+        return_date = current_date + timedelta(days=5)
+        
+        available_copy = book.book_copy.filter(available_copies__gt=0).first()
+        
+        if not available_copy:
+            return Response({'error': 'No available copies.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        loan = Loan.objects.create(book=book, member=member, return_date=return_date)
+        
+        available_copy.available_copies -= 1
+        available_copy.save()
+        
         send_loan_notification.delay(loan.id)
-        return Response({'status': 'Book loaned successfully.'}, status=status.HTTP_201_CREATED)
+        return Response(
+            {'status': 'Book loaned successfully.', 'return_date': return_date}, 
+            status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def return_book(self, request, pk=None):

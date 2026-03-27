@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
                 ('title', models.CharField(max_length=200)),
                 ('isbn', models.CharField(max_length=13, unique=True)),
                 ('genre', models.CharField(choices=[('fiction', 'Fiction'), ('nonfiction', 'Non-Fiction'), ('sci-fi', 'Sci-Fi'), ('biography', 'Biography')], max_length=50)),
-                ('available_copies', models.PositiveIntegerField(default=1)),
+                #('available_copies', models.PositiveIntegerField(default=1)),
                 ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='books', to='library.author')),
             ],
         ),

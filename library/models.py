@@ -15,6 +15,7 @@ class Book(models.Model):
         ('nonfiction', 'Non-Fiction'),
         ('sci-fi', 'Sci-Fi'),
         ('biography', 'Biography'),
+        ('philosophy', 'Philosophy')
         # Add more genres as needed
     ]
 
@@ -22,10 +23,23 @@ class Book(models.Model):
     author = models.ForeignKey(Author, related_name='books', on_delete=models.CASCADE)
     isbn = models.CharField(max_length=13, unique=True)
     genre = models.CharField(max_length=50, choices=GENRE_CHOICES)
-    available_copies = models.PositiveIntegerField(default=1)
+    
+    @property
+    def available_copies(self):
+        total = self.book_copy.count()
+        return total
 
     def __str__(self):
         return self.title
+    
+class BookCopy(models.Model):
+    book = models.ForeignKey(Book, related_name='book_copy', on_delete=models.PROTECT)
+    printing_date = models.DateField(null=True, blank=True)
+    available_copies = models.IntegerField(null=True, blank=True)
+    publisher = models.CharField(max_length=200)
+    
+    def __str__(self):
+        return self.book.title
 
 class Member(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
