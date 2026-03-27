@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from django.utils import timezone
 from .tasks import send_loan_notification
 from datetime import timedelta
+from django.db import transaction
 
 
 class AuthorViewSet(viewsets.ModelViewSet):
@@ -29,20 +30,21 @@ class BookViewSet(viewsets.ModelViewSet):
         current_date = timezone.now().date()
         return_date = current_date + timedelta(days=5)
         
-        available_copy = book.book_copy.filter(available_copies__gt=0).first()
-        
-        if not available_copy:
-            return Response({'error': 'No available copies.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        loan = Loan.objects.create(book=book, member=member, return_date=return_date)
-        
-        available_copy.available_copies -= 1
-        available_copy.save()
-        
-        send_loan_notification.delay(loan.id)
-        return Response(
-            {'status': 'Book loaned successfully.', 'return_date': return_date}, 
-            status=status.HTTP_201_CREATED)
+        with transaction.atomic():
+            available_copy = book.book_copy.select_for_update().filter(available_copies__gt=0).first()
+            
+            if not available_copy:
+                return Response({'error': 'No available copies.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            loan = Loan.objects.create(book=book, member=member, return_date=return_date)
+            
+            available_copy.available_copies -= 1
+            available_copy.save()
+            
+            send_loan_notification.delay(loan.id)
+            return Response(
+                {'status': 'Book loaned successfully.', 'return_date': return_date}, 
+                status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=['post'])
     def return_book(self, request, pk=None):
